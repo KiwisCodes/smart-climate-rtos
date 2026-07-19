@@ -209,7 +209,8 @@ class SensorReading:
         """
         # TODO: Implement repr here
         return "SensorReading(#{}, T={}C, H={}%)".format(
-        self.reading_id, self.temperature_c, self.humidity_pct )
+            self.reading_id, self.temperature_c, self.humidity_pct
+        )
 
 
 async def task_read_sensor():
@@ -262,7 +263,18 @@ async def task_lcd_display():
            - "%" at column 13
     """
     # TODO: Implement LCD display task
-    raise NotImplementedError("TODO: Person B needs to implement task_lcd_display")
+    while True:
+        reading = await lcd_queue.get()
+
+        lcd1602.clear()
+        lcd1602.show('TEMP: ', 0, 0)
+        lcd1602.show(str(reading.temperature_c), 0, 8)
+        lcd1602.show(chr(0), 0, 13)
+        lcd1602.show('C', 0, 14)
+        lcd1602.show('HUMI: ', 1, 0)
+        lcd1602.show(str(reading.humidity_pct), 1, 8)
+        lcd1602.show('%', 1, 13)
+
 
 
 # ==============================================================================
