@@ -68,57 +68,24 @@ class Queue:
     Owner: Person A (Phan Thanh Hung)
     """
     def __init__(self, max_items=5):
-        """
-        # TODO: Initialize the custom bounded Queue.
-        
-        Required Logic:
-        1. Initialize `self.items` as an empty list to store queue elements.
-        2. Store the capacity limit in `self.max_items`.
-        3. Create `self.item_ready` as a Semaphore initialized to 0 (counts filled slots).
-        4. Create `self.free_slots` as a Semaphore initialized to max_items (counts free slots).
-        """
-        # TODO: Implement initialization here
-        raise NotImplementedError("TODO: Person A needs to implement Queue.__init__")
+        self.items = []
+        self.max_items = max_items
+        self.item_ready = Semaphore(0)
+        self.free_slots = Semaphore(max_items)
 
     async def put(self, item):
-        """
-        # TODO: Put an item into the queue.
-        
-        Required Logic (Producer side):
-        1. Wait for a free slot by acquiring `self.free_slots` (async).
-        2. Append `item` to `self.items`.
-        3. Signal that a new item is ready by releasing `self.item_ready` (sync).
-        
-        Args:
-            item: The object to put in the queue.
-        """
-        # TODO: Implement put operation
-        raise NotImplementedError("TODO: Person A needs to implement Queue.put")
+        await self.free_slots.acquire()   # wait for room
+        self.items.append(item)
+        self.item_ready.release()         # signal: one more item available
 
     async def get(self):
-        """
-        # TODO: Get and remove an item from the queue.
-        
-        Required Logic (Consumer side):
-        1. Wait until an item is ready by acquiring `self.item_ready` (async).
-        2. Remove and return the first item from `self.items` (FIFO).
-        3. Signal that a slot has freed up by releasing `self.free_slots` (sync).
-        
-        Returns:
-            The popped item.
-        """
-        # TODO: Implement get operation
-        raise NotImplementedError("TODO: Person A needs to implement Queue.get")
+        await self.item_ready.acquire()   # wait for an item
+        item = self.items.pop(0)
+        self.free_slots.release()         # signal: one more slot free
+        return item
 
     def empty(self):
-        """
-        # TODO: Check if the queue is empty.
-        
-        Returns:
-            bool: True if queue has no items.
-        """
-        # TODO: Implement empty check
-        raise NotImplementedError("TODO: Person A needs to implement Queue.empty")
+        return len(self.items) == 0
 
 
 # ----------------------------------------------------------------------
@@ -152,14 +119,11 @@ humidifier_led = RGBLed(D7_PIN, 2)   # Actuator 3: Humidifier
 lcd1602 = LCD1602()                  # LCD screen
 dht20 = DHT20()                      # DHT20 temperature + humidity sensor
 
-# ----------------------------------------------------------------------
-# Per-consumer Queues (data hand-off - no shared globals)
-# ----------------------------------------------------------------------
-# TODO: Once Queue is implemented, these queues will hold SensorReading objects
-# lcd_queue = Queue(MAX_ITEMS)
-# heater_queue = Queue(MAX_ITEMS)
-# cooler_queue = Queue(MAX_ITEMS)
-# humidifier_queue = Queue(MAX_ITEMS)
+# Queues holding SensorReading objects
+lcd_queue = Queue(MAX_ITEMS)
+heater_queue = Queue(MAX_ITEMS)
+cooler_queue = Queue(MAX_ITEMS)
+humidifier_queue = Queue(MAX_ITEMS)
 
 
 def set_actuator_color(pixel_obj, color_hex):
@@ -336,48 +300,36 @@ async def task_humidifier():
 
 async def startup_self_test():
     """
-    # TODO: Implement startup_self_test.
-    
-    Required Logic:
-    1. Loop through heater_led, cooler_led, and humidifier_led:
-        a. Set the LED color to white ('#ffffff').
-        b. Asynchronously sleep for 300 ms.
-        c. Turn the LED off ('#000000').
+    Hardware startup self-test.
+    Briefly lights each actuator LED white, then off, one at a time.
     """
-    # TODO: Implement self test
-    raise NotImplementedError("TODO: Person A needs to implement startup_self_test")
+    for led in (heater_led, cooler_led, humidifier_led):
+        set_actuator_color(led, '#ffffff')
+        await asleep_ms(300)
+        set_actuator_color(led, '#000000')
 
 
 async def setup():
     """
-    # TODO: Implement setup sequence.
-    
-    Required Logic:
-    1. Print 'App started' to serial.
-    2. Await `startup_self_test()`.
-    3. Start all background tasks using `create_task()`:
-       - task_blinky()
-       - task_read_sensor()
-       - task_lcd_display()
-       - task_heater()
-       - task_cooler()
-       - task_humidifier()
+    Firmware setup logic. Starts all task runners.
     """
-    # TODO: Implement tasks startup
-    raise NotImplementedError("TODO: Person A needs to implement setup")
+    print('App started')
+    await startup_self_test()
+    create_task(task_blinky())
+    create_task(task_read_sensor())
+    create_task(task_lcd_display())
+    create_task(task_heater())
+    create_task(task_cooler())
+    create_task(task_humidifier())
 
 
 async def main():
     """
-    # TODO: Implement main scheduler loop.
-    
-    Required Logic:
-    1. Await `setup()`.
-    2. Loop forever, asynchronously sleeping for 100 ms in each iteration.
+    Main loop keeping the async scheduler alive.
     """
-    # TODO: Implement main scheduler loop
-    raise NotImplementedError("TODO: Person A needs to implement main")
+    await setup()
+    while True:
+        await asleep_ms(100)
 
 
-# TODO: Un-comment this call once Queue and task registration setups are implemented.
-# run_loop(main())
+run_loop(main())
