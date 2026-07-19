@@ -198,7 +198,9 @@ class SensorReading:
             reading_id (int): Incremental identifier for this reading.
         """
         # TODO: Implement initialization here
-        raise NotImplementedError("TODO: Person B needs to implement SensorReading.__init__")
+        self.temperature_c = temperature_c
+        self.humidity_pct = humidity_pct
+        self.reading_id = reading_id
 
     def __repr__(self):
         """
@@ -206,7 +208,8 @@ class SensorReading:
         Format: "SensorReading(#ID, T=XXC, H=XX%)"
         """
         # TODO: Implement repr here
-        raise NotImplementedError("TODO: Person B needs to implement SensorReading.__repr__")
+        return "SensorReading(#{}, T={}C, H={}%)".format(
+        self.reading_id, self.temperature_c, self.humidity_pct )
 
 
 async def task_read_sensor():
@@ -225,7 +228,19 @@ async def task_read_sensor():
         g. Asynchronously sleep for `SERIAL_PRINT_INTERVAL_MS` (using `asleep_ms`).
     """
     # TODO: Implement sensor reading producer task
-    raise NotImplementedError("TODO: Person B needs to implement task_read_sensor")
+    reading_id = 0
+    while True:
+        temp = await dht20.atemperature()
+        humi = await dht20.ahumidity()
+        reading_id += 1
+        reading = SensorReading(temp, humi, reading_id)
+        print("TEMP:", reading.temperature_c, "C | HUMI:", reading.humidity_pct, "%")
+        await lcd_queue.put(reading)
+        await heater_queue.put(reading)
+        await cooler_queue.put(reading)
+        await humidifier_queue.put(reading)
+
+        await asleep_ms(SERIAL_PRINT_INTERVAL_MS)
 
 
 async def task_lcd_display():
