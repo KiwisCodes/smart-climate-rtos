@@ -247,11 +247,8 @@ async def task_lcd_display():
 # ==============================================================================
 
 async def task_heater():
-    """
-    # TODO: Implement task_heater.
-    
-    Required Logic:
-    1. Loop forever:
+    """    
+    Loop forever:
         a. Dequeue a reading from `heater_queue` (`await heater_queue.get()`).
         b. Inspect `temperature_c`:
            - If temp < `TEMP_COLD_CRITICAL_C`: set LED color to RED ('#ff0000').
@@ -259,14 +256,21 @@ async def task_heater():
            - If `TEMP_COLD_WARNING_C` <= temp <= `TEMP_SAFE_MAX_C`: set LED color to GREEN ('#00ff00').
            - If temp > `TEMP_SAFE_MAX_C`: turn off LED (set to '#000000').
     """
-    # TODO: Implement heater controller task
-    raise NotImplementedError("TODO: Person C needs to implement task_heater")
+    while True:
+        reading = await heater_queue.get()
+        temp = reading.temperature_c
 
+        if temp < TEMP_COLD_CRITICAL_C:
+            set_actuator_color(heater_led, '#ff0000')      # RED: critical cold
+        elif temp < TEMP_COLD_WARNING_C:
+            set_actuator_color(heater_led, '#ff8c00')      # ORANGE: cold warning
+        elif temp <= TEMP_SAFE_MAX_C:
+            set_actuator_color(heater_led, '#00ff00')      # GREEN: safe range
+        else:
+            set_actuator_color(heater_led, '#000000')      # OFF: too warm
 
 async def task_cooler():
-    """
-    # TODO: Implement task_cooler.
-    
+    """    
     Required Logic:
     1. Loop forever:
         a. Dequeue a reading from `cooler_queue` (`await cooler_queue.get()`).
@@ -278,9 +282,16 @@ async def task_cooler():
            - Otherwise:
              Turn cooler LED to BLACK ('#000000').
     """
-    # TODO: Implement cooler controller task
-    raise NotImplementedError("TODO: Person C needs to implement task_cooler")
+    while True:
+        reading = await cooler_queue.get()
+        temp = reading.temperature_c
 
+        if temp > TEMP_SAFE_MAX_C:
+            set_actuator_color(cooler_led, '#00ff00')     # COOLING
+            await asleep_ms(COOLER_ACTIVE_MS)
+            set_actuator_color(cooler_led, '#000000')      # back to IDLE
+        else:
+            set_actuator_color(cooler_led, '#000000')      # IDLE
 
 # ==============================================================================
 # SECTION D: Humidifier Control & Heartbeat Blinky
