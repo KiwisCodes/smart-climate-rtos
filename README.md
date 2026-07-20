@@ -28,7 +28,7 @@ The implementation in `main.py` is divided into logical blocks with developer de
 
 To run and verify this code in the teacher's OhSTEM simulator:
 
-1. Open the [OhSTEM Programming Portal](https://program.ohstem.vn) in your web browser.
+1. Open the [OhSTEM VR Simulator Portal](https://app.ohstem.vn/#!/vr) in your web browser.
 2. Select **Yolo:UNO** as your target device.
 3. Switch the programming mode from blocks to **Python** (using the toggle at the top of the interface).
 4. Open the project's [main.py](file:///Users/apple/Coding-projects/smart-climate-rtos/main.py) and copy the entire code contents.
