@@ -288,36 +288,29 @@ async def task_cooler():
 # ==============================================================================
 
 async def task_blinky():
-    """
-    # TODO: Implement task_blinky.
-    
-    Required Logic:
-    1. Loop forever:
-        a. Toggle the onboard LED state (`led_D13.toggle()`).
-        b. Asynchronously sleep for `BLINK_INTERVAL_MS`.
-    """
-    # TODO: Implement blinky heartbeat task
-    raise NotImplementedError("TODO: Person D needs to implement task_blinky")
+    while True:
+        led_D13.toggle()
+        await asleep_ms(BLINK_INTERVAL_MS)
 
 
 async def task_humidifier():
-    """
-    # TODO: Implement task_humidifier.
-    
-    Required Logic:
-    1. Loop forever:
-        a. Dequeue a reading from `humidifier_queue` (`await humidifier_queue.get()`).
-        b. Inspect `humidity_pct`:
-           - If humidity < `HUMIDITY_THRESHOLD_PCT`:
-             i. Set humidifier LED to GREEN ('#00ff00') and sleep for `HUMIDIFIER_GREEN_MS`.
-             ii. Set humidifier LED to YELLOW ('#ffff00') and sleep for `HUMIDIFIER_YELLOW_MS`.
-             iii. Set humidifier LED to RED ('#ff0000') and sleep for `HUMIDIFIER_RED_MS`.
-             iv. Turn off humidifier LED (set to '#000000').
-           - Otherwise:
-             Turn off humidifier LED (set to '#000000').
-    """
-    # TODO: Implement humidifier controller task
-    raise NotImplementedError("TODO: Person D needs to implement task_humidifier")
+    while True:
+        reading = await humidifier_queue.get()
+        humi = reading.humidity_pct
+
+        if humi < HUMIDITY_THRESHOLD_PCT:
+            set_actuator_color(humidifier_led, '#00ff00')  # Stage 1: GREEN
+            await asleep_ms(HUMIDIFIER_GREEN_MS)
+
+            set_actuator_color(humidifier_led, '#ffff00')  # Stage 2: YELLOW
+            await asleep_ms(HUMIDIFIER_YELLOW_MS)
+
+            set_actuator_color(humidifier_led, '#ff0000')  # Stage 3: RED
+            await asleep_ms(HUMIDIFIER_RED_MS)
+
+            set_actuator_color(humidifier_led, '#000000')  # back to IDLE
+        else:
+            set_actuator_color(humidifier_led, '#000000')  # IDLE
 
 
 # ==============================================================================
