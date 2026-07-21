@@ -1,11 +1,4 @@
-"""
-Smart Climate Control System (RTOS Project)
-Platform : YoloUNO (ESP32-S3)
-Sensor   : DHT20 (I2C, temperature + humidity)
-Display  : LCD1602
-Actuators: 3x RGB LED modules (Heater / Cooler / Humidifier)
 
-"""
 
 from yolo_uno import *
 from pins import *
@@ -19,10 +12,7 @@ import asyncio
 # ==============================================================================
 
 class Semaphore:
-    """
-    Teacher-provided custom polling counting semaphore.
-    Do not modify.
-    """
+    
     def __init__(self, value=1):
         if value < 0:
             raise ValueError("ValueError")
@@ -58,12 +48,7 @@ class Semaphore:
             task = self.waiting.pop(0)
 
 class Queue:
-    """
-    Custom bounded Queue, built on top of Semaphore.
-    Implements the classic bounded-buffer producer/consumer pattern.
     
-    Owner: Person A (Phan Thanh Hung)
-    """
     def __init__(self, max_items=5):
         self.items = []
         self.max_items = max_items
@@ -122,13 +107,7 @@ cooler_queue = Queue(MAX_ITEMS)
 humidifier_queue = Queue(MAX_ITEMS)
 
 def set_actuator_color(pixel_obj, color_hex):
-    """
-    Helper function to paint both pixels of a dual-LED RGB module the same color.
     
-    Args:
-        pixel_obj: The RGBLed instance to control.
-        color_hex (str): The hexadecimal representation of the color (e.g. '#ff0000').
-    """
     rgb = hex_to_rgb(color_hex)
     pixel_obj.show(0, rgb)
     pixel_obj.show(1, rgb)
@@ -139,11 +118,7 @@ def set_actuator_color(pixel_obj, color_hex):
 # ==============================================================================
 
 class SensorReading:
-    """
-    Immutable-by-convention snapshot of one DHT20 reading.
     
-    Owner: Person B (Duong Quy Trang)
-    """
     __slots__ = ("temperature_c", "humidity_pct", "reading_id")
 
     def __init__(self, temperature_c, humidity_pct, reading_id):
@@ -194,15 +169,7 @@ async def task_lcd_display():
 # ==============================================================================
 
 async def task_heater():
-    """    
-    Loop forever:
-        a. Dequeue a reading from `heater_queue` (`await heater_queue.get()`).
-        b. Inspect `temperature_c`:
-           - If temp < `TEMP_COLD_CRITICAL_C`: set LED color to RED ('#ff0000').
-           - If `TEMP_COLD_CRITICAL_C` <= temp < `TEMP_COLD_WARNING_C`: set LED color to ORANGE ('#ff8c00').
-           - If `TEMP_COLD_WARNING_C` <= temp <= `TEMP_SAFE_MAX_C`: set LED color to GREEN ('#00ff00').
-           - If temp > `TEMP_SAFE_MAX_C`: turn off LED (set to '#000000').
-    """
+    
     while True:
         reading = await heater_queue.get()
         temp = reading.temperature_c
@@ -264,19 +231,14 @@ async def task_humidifier():
 # ==============================================================================
 
 async def startup_self_test():
-    """
-    Hardware startup self-test.
-    Briefly lights each actuator LED white, then off, one at a time.
-    """
+    
     for led in (heater_led, cooler_led, humidifier_led):
         set_actuator_color(led, '#ffffff')
         await asleep_ms(300)
         set_actuator_color(led, '#000000')
 
 async def setup():
-    """
-    Firmware setup logic. Starts all task runners.
-    """
+    
     print('App started')
     await startup_self_test()
     create_task(task_blinky())
@@ -287,9 +249,7 @@ async def setup():
     create_task(task_humidifier())
 
 async def main():
-    """
-    Main loop keeping the async scheduler alive.
-    """
+    
     await setup()
     while True:
         await asleep_ms(100)
