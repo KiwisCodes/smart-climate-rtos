@@ -5,8 +5,6 @@ Sensor   : DHT20 (I2C, temperature + humidity)
 Display  : LCD1602
 Actuators: 3x RGB LED modules (Heater / Cooler / Humidifier)
 
-This consolidated file is split into logical sections. Each section designates the 
-responsible group member. Implementable functions and classes are annotated with TODOs.
 """
 
 from yolo_uno import *
@@ -59,7 +57,6 @@ class Semaphore:
             # Release a token
             task = self.waiting.pop(0)
 
-
 class Queue:
     """
     Custom bounded Queue, built on top of Semaphore.
@@ -86,7 +83,6 @@ class Queue:
 
     def empty(self):
         return len(self.items) == 0
-
 
 # ----------------------------------------------------------------------
 # Configuration Thresholds & Timings
@@ -125,7 +121,6 @@ heater_queue = Queue(MAX_ITEMS)
 cooler_queue = Queue(MAX_ITEMS)
 humidifier_queue = Queue(MAX_ITEMS)
 
-
 def set_actuator_color(pixel_obj, color_hex):
     """
     Helper function to paint both pixels of a dual-LED RGB module the same color.
@@ -137,7 +132,6 @@ def set_actuator_color(pixel_obj, color_hex):
     rgb = hex_to_rgb(color_hex)
     pixel_obj.show(0, rgb)
     pixel_obj.show(1, rgb)
-
 
 # ==============================================================================
 # SECTION B: Sensor Reading & LCD Display
@@ -153,46 +147,19 @@ class SensorReading:
     __slots__ = ("temperature_c", "humidity_pct", "reading_id")
 
     def __init__(self, temperature_c, humidity_pct, reading_id):
-        """
-        # TODO: Initialize the SensorReading object.
         
-        Args:
-            temperature_c (float): Temperature reading in Celsius.
-            humidity_pct (float): Humidity reading in percentage.
-            reading_id (int): Incremental identifier for this reading.
-        """
-        # TODO: Implement initialization here
         self.temperature_c = temperature_c
         self.humidity_pct = humidity_pct
         self.reading_id = reading_id
 
     def __repr__(self):
-        """
-        # TODO: Return formatted reading representation.
-        Format: "SensorReading(#ID, T=XXC, H=XX%)"
-        """
-        # TODO: Implement repr here
+        
         return "SensorReading(#{}, T={}C, H={}%)".format(
             self.reading_id, self.temperature_c, self.humidity_pct
         )
 
-
 async def task_read_sensor():
-    """
-    # TODO: Implement task_read_sensor.
     
-    Required Logic:
-    1. Maintain an internal integer `reading_id` starting at 0.
-    2. Loop forever:
-        a. Retrieve temperature asynchronously (`await dht20.atemperature()`).
-        b. Retrieve humidity asynchronously (`await dht20.ahumidity()`).
-        c. Increment `reading_id` by 1.
-        d. Wrap values inside a `SensorReading` object.
-        e. Print output: "TEMP: <temp> C | HUMI: <humi> %"
-        f. Push the reading into `lcd_queue`, `heater_queue`, `cooler_queue`, and `humidifier_queue`.
-        g. Asynchronously sleep for `SERIAL_PRINT_INTERVAL_MS` (using `asleep_ms`).
-    """
-    # TODO: Implement sensor reading producer task
     reading_id = 0
     while True:
         temp = await dht20.atemperature()
@@ -207,26 +174,8 @@ async def task_read_sensor():
 
         await asleep_ms(SERIAL_PRINT_INTERVAL_MS)
 
-
 async def task_lcd_display():
-    """
-    # TODO: Implement task_lcd_display.
     
-    Required Logic:
-    1. Loop forever:
-        a. Dequeue a reading from `lcd_queue` (`await lcd_queue.get()`).
-        b. Clear the screen (`lcd1602.clear()`).
-        c. Show temperature on row 0:
-           - "TEMP: " at column 0
-           - Temperature value string at column 8
-           - Degree symbol `chr(0)` at column 13
-           - "C" at column 14
-        d. Show humidity on row 1:
-           - "HUMI: " at column 0
-           - Humidity value string at column 8
-           - "%" at column 13
-    """
-    # TODO: Implement LCD display task
     while True:
         reading = await lcd_queue.get()
 
@@ -238,8 +187,6 @@ async def task_lcd_display():
         lcd1602.show('HUMI: ', 1, 0)
         lcd1602.show(str(reading.humidity_pct), 1, 8)
         lcd1602.show('%', 1, 13)
-
-
 
 # ==============================================================================
 # SECTION C: Heater & Cooler Control
@@ -270,18 +217,7 @@ async def task_heater():
             set_actuator_color(heater_led, '#000000')      # OFF: too warm
 
 async def task_cooler():
-    """    
-    Required Logic:
-    1. Loop forever:
-        a. Dequeue a reading from `cooler_queue` (`await cooler_queue.get()`).
-        b. Inspect `temperature_c`:
-           - If temp > `TEMP_SAFE_MAX_C`:
-             i. Turn cooler LED to GREEN ('#00ff00').
-             ii. Sleep asynchronously for `COOLER_ACTIVE_MS`.
-             iii. Turn cooler LED back to BLACK ('#000000') (idle).
-           - Otherwise:
-             Turn cooler LED to BLACK ('#000000').
-    """
+    
     while True:
         reading = await cooler_queue.get()
         temp = reading.temperature_c
@@ -303,7 +239,6 @@ async def task_blinky():
         led_D13.toggle()
         await asleep_ms(BLINK_INTERVAL_MS)
 
-
 async def task_humidifier():
     while True:
         reading = await humidifier_queue.get()
@@ -323,7 +258,6 @@ async def task_humidifier():
         else:
             set_actuator_color(humidifier_led, '#000000')  # IDLE
 
-
 # ==============================================================================
 # SECTION A: Startup Self-Test & Event Loop Setup
 # Owner: Phan Thanh Hung (10423051)
@@ -339,7 +273,6 @@ async def startup_self_test():
         await asleep_ms(300)
         set_actuator_color(led, '#000000')
 
-
 async def setup():
     """
     Firmware setup logic. Starts all task runners.
@@ -353,7 +286,6 @@ async def setup():
     create_task(task_cooler())
     create_task(task_humidifier())
 
-
 async def main():
     """
     Main loop keeping the async scheduler alive.
@@ -361,6 +293,5 @@ async def main():
     await setup()
     while True:
         await asleep_ms(100)
-
 
 run_loop(main())
